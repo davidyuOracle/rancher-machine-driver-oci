@@ -15,7 +15,7 @@ package main
 
 import (
 	"github.com/docker/machine/libmachine/drivers/plugin"
-	"github.com/jlamillan/docker-machine-driver-oci/pkg/drivers/oci"
+	"github.com/cpoczatek/docker-machine-driver-oci/pkg/drivers/oci"
 )
 
 func main() {

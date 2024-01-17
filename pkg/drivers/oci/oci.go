@@ -63,6 +63,11 @@ type Driver struct {
 	UsePrivateIP         bool
 	VCNCompartmentID     string
 	VCNID                string
+	IsRover              bool
+	RoverComputeEndpoint string
+	RoverNetworkEndpoint string
+	RoverCertPath        string
+	RoverCertContent     string
 	// Runtime values
 	InstanceID string
 }
@@ -111,7 +116,7 @@ func (d *Driver) Create() error {
 		return err
 	}
 
-	d.InstanceID, err = oci.CreateInstance(d.MachineName, d.AvailabilityDomain, d.NodeCompartmentID, d.Shape, d.Image, d.SubnetID, d.SSHUser, string(publicKeyBytes), d.OCPUs, d.MemoryInGBs)
+	d.InstanceID, err = oci.CreateInstance(d.IsRover, d.MachineName, d.AvailabilityDomain, d.NodeCompartmentID, d.Shape, d.Image, d.SubnetID, d.SSHUser, string(publicKeyBytes), d.OCPUs, d.MemoryInGBs)
 	if err != nil {
 		return err
 	}
@@ -233,6 +238,31 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Usage:  "Specify pre-existing VCN id in which you want to create the node(s)",
 			EnvVar: "OCI_VCN_ID",
 		},
+		mcnflag.BoolFlag{
+			Name:   "oci-is-rover",
+			Usage:  "Specify if the plugin is used for a oci rover device",
+			EnvVar: "OCI_IS_ROVER",
+		},
+		mcnflag.StringFlag{
+			Name:   "oci-rover-compute-endpoint",
+			Usage:  "Specify compute endpoint for rover",
+			EnvVar: "OCI_ROVER_COMPUTE_ENDPOINT",
+		},
+		mcnflag.StringFlag{
+			Name:   "oci-rover-network-endpoint",
+			Usage:  "SSpecify network endpoint for rover",
+			EnvVar: "OCI_ROVER_NETWORK_ENDPOINT",
+		},
+		mcnflag.StringFlag{
+			Name:   "oci-rover-cert-path",
+			Usage:  "Specify rover cert key path for the specified OCI user, in PEM format",
+			EnvVar: "OCI_ROVER_CERT_PATH",
+		},
+		mcnflag.StringFlag{
+			Name:   "oci-rover-cert-content",
+			Usage:  "Specify rover cert key content for the specified OCI user, in PEM format",
+			EnvVar: "OCI_ROVER_CERT_CONTENT",
+		},
 	}
 }
 
@@ -350,9 +380,12 @@ func (d *Driver) Kill() error {
 // PreCreateCheck allows for pre-create operations to make sure a driver is ready for creation
 func (d *Driver) PreCreateCheck() error {
 	log.Debug("oci.PreCreateCheck()")
-
-	// Check the number of availability domain, which will also validate the credentials.
-	log.Infof("Verifying number of availability domains... ")
+	if d.IsRover {
+		// TODO better prechecks
+		return nil
+	}
+	// Check that the node image exists, which will also validate the credentials.
+	log.Infof("Verifying node image availability... ")
 
 	oci, err := d.initOCIClient()
 	if err != nil {
@@ -476,9 +509,19 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 			d.PrivateKeyContents = string(privateKeyBytes)
 		}
 	}
-
 	d.UsePrivateIP = flags.Bool("oci-node-use-private-ip")
-
+	d.IsRover = flags.Bool("oci-is-rover")
+	d.RoverComputeEndpoint = flags.String("oci-rover-compute-endpoint")
+	d.RoverNetworkEndpoint = flags.String("oci-rover-network-endpoint")
+	d.RoverCertPath = flags.String("oci-rover-cert-path")
+	d.RoverCertContent = flags.String("oci-rover-cert-content")
+	if d.IsRover && d.RoverCertContent == "" && d.RoverCertPath != "" {
+		roverCertBytes, err := ioutil.ReadFile(d.RoverCertPath)
+		if err == nil {
+			log.Debug("error reading rover cert content or path")
+			d.RoverCertContent = string(roverCertBytes)
+		}
+	}
 	return nil
 }
 
@@ -515,7 +558,7 @@ func (d *Driver) initOCIClient() (Client, error) {
 		d.PrivateKeyContents,
 		&d.PrivateKeyPassphrase)
 
-	ociClient, err := newClient(configurationProvider)
+	ociClient, err := newClient(configurationProvider, d)
 	if err != nil {
 		return Client{}, err
 	}

@@ -1,4 +1,4 @@
-module github.com/jlamillan/docker-machine-driver-oci
+module github.com/cpoczatek/docker-machine-driver-oci
 
 go 1.21.3
 

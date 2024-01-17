@@ -16,11 +16,14 @@ package oci
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"github.com/oracle/oci-go-sdk/v65/example/helpers"
 	"github.com/rancher/machine/libmachine/log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -39,7 +42,7 @@ type Client struct {
 	// TODO we could also include the retry settings here
 }
 
-func newClient(configuration common.ConfigurationProvider) (*Client, error) {
+func newClient(configuration common.ConfigurationProvider, d *Driver) (*Client, error) {
 
 	computeClient, err := core.NewComputeClientWithConfigurationProvider(configuration)
 	if err != nil {
@@ -50,6 +53,30 @@ func newClient(configuration common.ConfigurationProvider) (*Client, error) {
 	if err != nil {
 		log.Debugf("create new VirtualNetwork client failed with err %v", err)
 		return nil, err
+	}
+if d.IsRover {
+		computeClient.Host = d.RoverComputeEndpoint
+		vNetClient.Host = d.RoverNetworkEndpoint
+		pool := x509.NewCertPool()
+		//pem, err := ioutil.ReadFile(d.RoverCertPath)
+		if err != nil {
+			panic("can not read cert " + err.Error())
+		}
+		pool.AppendCertsFromPEM([]byte(d.RoverCertContent))
+		if h, ok := computeClient.HTTPClient.(*http.Client); ok {
+			tr := &http.Transport{TLSClientConfig: &tls.Config{RootCAs: pool}}
+			h.Transport = tr
+		} else {
+			panic("the client dispatcher is not of http.Client type. can not patch the tls config")
+		}
+
+		if h, ok := vNetClient.HTTPClient.(*http.Client); ok {
+			//tr := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+			tr := &http.Transport{TLSClientConfig: &tls.Config{RootCAs: pool}}
+			h.Transport = tr
+		} else {
+			panic("the client dispatcher is not of http.Client type. can not patch the tls config")
+		}
 	}
 	identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configuration)
 	if err != nil {
@@ -67,62 +94,21 @@ func newClient(configuration common.ConfigurationProvider) (*Client, error) {
 }
 
 // CreateInstance creates a new compute instance.
-func (c *Client) CreateInstance(displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys string, nodeOCPUs, nodeMemoryInGBs int) (string, error) {
+func (c *Client) CreateInstance(isRover bool,displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys string, nodeOCPUs, nodeMemoryInGBs int) (string, error) {
+	var request core.LaunchInstanceRequest
+	var err error
+	if isRover {
+		log.Debug("inside rover")
+		err, request = c.createReqForRover(displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys)
+	} else {
+		err, request = c.createReqForOCi(displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys)
 
-	req := identity.ListAvailabilityDomainsRequest{}
-	req.CompartmentId = &compartmentID
-	ads, err := c.identityClient.ListAvailabilityDomains(context.Background(), req)
+	}
 	if err != nil {
 		return "", err
 	}
 
-	// Just in case shortened or lower-case availability domain name was used
-	log.Debugf("Resolving availability domain from %s", availabilityDomain)
-	for _, ad := range ads.Items {
-		if strings.Contains(*ad.Name, strings.ToUpper(availabilityDomain)) {
-			log.Debugf("Availability domain %s", *ad.Name)
-			availabilityDomain = *ad.Name
-		}
-	}
-
-	imageID, err := c.getImageID(compartmentID, nodeImageName)
-	if err != nil {
-		return "", err
-	}
-
-	// Create the launch compute instance request
-	request := core.LaunchInstanceRequest{
-		LaunchInstanceDetails: core.LaunchInstanceDetails{
-			AvailabilityDomain: &availabilityDomain,
-			CompartmentId:      &compartmentID,
-			Shape:              &nodeShape,
-			CreateVnicDetails: &core.CreateVnicDetails{
-				SubnetId: &nodeSubnetID,
-			},
-			DisplayName: &displayName,
-			Metadata: map[string]string{
-				"ssh_authorized_keys": authorizedKeys,
-				"user_data":           base64.StdEncoding.EncodeToString(createCloudInitScript(sshUser)),
-			},
-			SourceDetails: core.InstanceSourceViaImageDetails{
-				ImageId: imageID,
-			},
-		},
-	}
-
-	if nodeOCPUs > 0 {
-		oCPUs := float32(nodeOCPUs)
-		memoryInGBs := float32(nodeMemoryInGBs)
-
-		LaunchInstanceShapeConfigDetails := core.LaunchInstanceShapeConfigDetails{
-			Ocpus:       &oCPUs,
-			MemoryInGBs: &memoryInGBs,
-		}
-		request.ShapeConfig = &LaunchInstanceShapeConfigDetails
-	}
-
-	log.Debugf("Launching instance with cloud-init: %s", string(createCloudInitScript(sshUser)))
-
+	log.Debug("request is ", request)
 	createResp, err := c.computeClient.LaunchInstance(context.Background(), request)
 	if err != nil {
 		return "", err
@@ -149,6 +135,84 @@ func (c *Client) CreateInstance(displayName, availabilityDomain, compartmentID, 
 	}
 
 	return *instance.Id, nil
+}
+
+func (c *Client) createReqForOCi(displayName string, availabilityDomain string, compartmentID string, nodeShape string, nodeImageName string, nodeSubnetID string, sshUser string, authorizedKeys string) (error, core.LaunchInstanceRequest) {
+	req := identity.ListAvailabilityDomainsRequest{}
+	req.CompartmentId = &compartmentID
+	ads, err := c.identityClient.ListAvailabilityDomains(context.Background(), req)
+	if err != nil {
+		return nil, core.LaunchInstanceRequest{}
+	}
+
+	// Just in case shortened or lower-case availability domain name was used
+	log.Debugf("Resolving availability domain from %s", availabilityDomain)
+	for _, ad := range ads.Items {
+		if strings.Contains(*ad.Name, strings.ToUpper(availabilityDomain)) {
+			log.Debugf("Availability domain %s", *ad.Name)
+			availabilityDomain = *ad.Name
+		}
+	}
+
+	imageID, err := c.getImageID(compartmentID, nodeImageName)
+	if err != nil {
+		return nil, core.LaunchInstanceRequest{}
+	}
+	// Create the launch compute instance request
+	request := core.LaunchInstanceRequest{
+		LaunchInstanceDetails: core.LaunchInstanceDetails{
+			AvailabilityDomain: &availabilityDomain,
+			CompartmentId:      &compartmentID,
+			Shape:              &nodeShape,
+			CreateVnicDetails: &core.CreateVnicDetails{
+				SubnetId: &nodeSubnetID,
+			},
+			DisplayName: &displayName,
+			Metadata: map[string]string{
+				"ssh_authorized_keys": authorizedKeys,
+				"user_data":           base64.StdEncoding.EncodeToString(createCloudInitScript(sshUser)),
+			},
+			SourceDetails: core.InstanceSourceViaImageDetails{
+				ImageId: imageID,
+			},
+		},
+	}
+	return err, request
+}
+
+func (c *Client) createReqForRover(displayName string, availabilityDomain string, compartmentID string, nodeShape string, nodeImageName string, nodeSubnetID string, sshUser string, authorizedKeys string) (error, core.LaunchInstanceRequest) {
+	imageID, err := c.getImageID(compartmentID, nodeImageName)
+	if err != nil {
+		log.Error(err)
+		log.Debug("inside error bhau", err)
+		return nil, core.LaunchInstanceRequest{}
+	}
+	// Create the launch compute instance request
+	request := core.LaunchInstanceRequest{
+		LaunchInstanceDetails: core.LaunchInstanceDetails{
+			AvailabilityDomain: common.String("OREI-1-AD-1"),
+			CompartmentId:      &compartmentID,
+			Shape:              &nodeShape,
+			CreateVnicDetails: &core.CreateVnicDetails{
+				SubnetId:       &nodeSubnetID,
+				AssignPublicIp: common.Bool(true),
+			},
+			FaultDomain: common.String("FAULT-DOMAIN-1"),
+			DisplayName: &displayName,
+			Metadata: map[string]string{
+				"ssh_authorized_keys": authorizedKeys,
+				"user_data":           base64.StdEncoding.EncodeToString(createCloudInitScript(sshUser)),
+			},
+			SourceDetails: core.InstanceSourceViaImageDetails{
+				ImageId:             imageID,
+				BootVolumeSizeInGBs: common.Int64(50),
+			},
+			AgentConfig: &core.LaunchInstanceAgentConfigDetails{
+				IsMonitoringDisabled: common.Bool(true),
+			},
+		},
+	}
+	return err, request
 }
 
 // GetInstance gets a compute instance by id.
