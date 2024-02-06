@@ -54,7 +54,7 @@ func newClient(configuration common.ConfigurationProvider, d *Driver) (*Client, 
 		log.Debugf("create new VirtualNetwork client failed with err %v", err)
 		return nil, err
 	}
-if d.IsRover {
+	if d.IsRover {
 		computeClient.Host = d.RoverComputeEndpoint
 		vNetClient.Host = d.RoverNetworkEndpoint
 		pool := x509.NewCertPool()
@@ -94,7 +94,7 @@ if d.IsRover {
 }
 
 // CreateInstance creates a new compute instance.
-func (c *Client) CreateInstance(isRover bool,displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys string, nodeOCPUs, nodeMemoryInGBs int) (string, error) {
+func (c *Client) CreateInstance(isRover bool, displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys string, nodeOCPUs, nodeMemoryInGBs int) (string, error) {
 	var request core.LaunchInstanceRequest
 	var err error
 	if isRover {
