@@ -16,16 +16,14 @@ package oci
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/oracle/oci-go-sdk/v65/example/helpers"
-	"github.com/rancher/machine/libmachine/log"
-	"net/http"
 	"strings"
 	"time"
+
+	"github.com/oracle/oci-go-sdk/v65/example/helpers"
+	"github.com/rancher/machine/libmachine/log"
 
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/core"
@@ -57,26 +55,27 @@ func newClient(configuration common.ConfigurationProvider, d *Driver) (*Client, 
 	if d.IsRover {
 		computeClient.Host = d.RoverComputeEndpoint
 		vNetClient.Host = d.RoverNetworkEndpoint
-		pool := x509.NewCertPool()
+		//		pool := x509.NewCertPool()
 		//pem, err := ioutil.ReadFile(d.RoverCertPath)
-		if err != nil {
-			panic("can not read cert " + err.Error())
-		}
-		pool.AppendCertsFromPEM([]byte(d.RoverCertContent))
-		if h, ok := computeClient.HTTPClient.(*http.Client); ok {
-			tr := &http.Transport{TLSClientConfig: &tls.Config{RootCAs: pool}}
-			h.Transport = tr
-		} else {
-			panic("the client dispatcher is not of http.Client type. can not patch the tls config")
-		}
+		//		if err != nil {
+		//			panic("can not read cert " + err.Error())
+		//		}
+		//		pool.AppendCertsFromPEM([]byte(d.RoverCertContent))
+		//		if h, ok := computeClient.HTTPClient.(*http.Client); ok {
+		//			tr := &http.Transport{TLSClientConfig: &tls.Config{RootCAs: pool}}
+		//			h.Transport = tr
+		//		} else {
+		//			panic("the client dispatcher is not of http.Client type. can not patch the tls config")
+		//		}
 
-		if h, ok := vNetClient.HTTPClient.(*http.Client); ok {
-			//tr := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-			tr := &http.Transport{TLSClientConfig: &tls.Config{RootCAs: pool}}
-			h.Transport = tr
-		} else {
-			panic("the client dispatcher is not of http.Client type. can not patch the tls config")
-		}
+		//		if h, ok := vNetClient.HTTPClient.(*http.Client); ok {
+		//			//tr := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+		//			tr := &http.Transport{TLSClientConfig: &tls.Config{RootCAs: pool}}
+		//			h.Transport = tr
+		//		} else {
+		//			panic("the client dispatcher is not of http.Client type. can not patch the tls config")
+		//		}
+
 	}
 	identityClient, err := identity.NewIdentityClientWithConfigurationProvider(configuration)
 	if err != nil {

@@ -21,6 +21,11 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/log"
 	"github.com/docker/machine/libmachine/mcnflag"
@@ -28,10 +33,6 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/core"
 	"golang.org/x/crypto/ssh"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 const (
@@ -66,8 +67,8 @@ type Driver struct {
 	IsRover              bool
 	RoverComputeEndpoint string
 	RoverNetworkEndpoint string
-	RoverCertPath        string
-	RoverCertContent     string
+	//	RoverCertPath        string
+	//	RoverCertContent     string
 	// Runtime values
 	InstanceID string
 }
@@ -513,15 +514,15 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.IsRover = flags.Bool("oci-is-rover")
 	d.RoverComputeEndpoint = flags.String("oci-rover-compute-endpoint")
 	d.RoverNetworkEndpoint = flags.String("oci-rover-network-endpoint")
-	d.RoverCertPath = flags.String("oci-rover-cert-path")
-	d.RoverCertContent = flags.String("oci-rover-cert-content")
-	if d.IsRover && d.RoverCertContent == "" && d.RoverCertPath != "" {
-		roverCertBytes, err := ioutil.ReadFile(d.RoverCertPath)
-		if err == nil {
-			log.Debug("error reading rover cert content or path")
-			d.RoverCertContent = string(roverCertBytes)
-		}
-	}
+	//	d.RoverCertPath = flags.String("oci-rover-cert-path")
+	//	d.RoverCertContent = flags.String("oci-rover-cert-content")
+	//	if d.IsRover && d.RoverCertContent == "" && d.RoverCertPath != "" {
+	//		roverCertBytes, err := ioutil.ReadFile(d.RoverCertPath)
+	//		if err == nil {
+	//			log.Debug("error reading rover cert content or path")
+	//			d.RoverCertContent = string(roverCertBytes)
+	//		}
+	//	}
 	return nil
 }
 
