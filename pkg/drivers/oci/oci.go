@@ -254,16 +254,16 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Usage:  "SSpecify network endpoint for rover",
 			EnvVar: "OCI_ROVER_NETWORK_ENDPOINT",
 		},
-		mcnflag.StringFlag{
-			Name:   "oci-rover-cert-path",
-			Usage:  "Specify rover cert key path for the specified OCI user, in PEM format",
-			EnvVar: "OCI_ROVER_CERT_PATH",
-		},
-		mcnflag.StringFlag{
-			Name:   "oci-rover-cert-content",
-			Usage:  "Specify rover cert key content for the specified OCI user, in PEM format",
-			EnvVar: "OCI_ROVER_CERT_CONTENT",
-		},
+		//		mcnflag.StringFlag{
+		//			Name:   "oci-rover-cert-path",
+		//			Usage:  "Specify rover cert key path for the specified OCI user, in PEM format",
+		//			EnvVar: "OCI_ROVER_CERT_PATH",
+		//		},
+		//		mcnflag.StringFlag{
+		//			Name:   "oci-rover-cert-content",
+		//			Usage:  "Specify rover cert key content for the specified OCI user, in PEM format",
+		//			EnvVar: "OCI_ROVER_CERT_CONTENT",
+		//		},
 	}
 }
 
