@@ -16,7 +16,7 @@ package oci
 
 import (
 	"context"
-	"encoding/base64"
+	//"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
@@ -93,14 +93,14 @@ func newClient(configuration common.ConfigurationProvider, d *Driver) (*Client, 
 }
 
 // CreateInstance creates a new compute instance.
-func (c *Client) CreateInstance(isRover bool, displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys string, nodeOCPUs, nodeMemoryInGBs int) (string, error) {
+func (c *Client) CreateInstance(isRover bool, Userdata, displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys string, nodeOCPUs, nodeMemoryInGBs int) (string, error) {
 	var request core.LaunchInstanceRequest
 	var err error
 	if isRover {
 		log.Debug("inside rover")
-		err, request = c.createReqForRover(displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys)
+		err, request = c.createReqForRover(Userdata, displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys)
 	} else {
-		err, request = c.createReqForOCi(displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys)
+		err, request = c.createReqForOCi(Userdata, displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys)
 
 	}
 	if err != nil {
@@ -136,7 +136,7 @@ func (c *Client) CreateInstance(isRover bool, displayName, availabilityDomain, c
 	return *instance.Id, nil
 }
 
-func (c *Client) createReqForOCi(displayName string, availabilityDomain string, compartmentID string, nodeShape string, nodeImageName string, nodeSubnetID string, sshUser string, authorizedKeys string) (error, core.LaunchInstanceRequest) {
+func (c *Client) createReqForOCi(Userdata string, displayName string, availabilityDomain string, compartmentID string, nodeShape string, nodeImageName string, nodeSubnetID string, sshUser string, authorizedKeys string) (error, core.LaunchInstanceRequest) {
 	req := identity.ListAvailabilityDomainsRequest{}
 	req.CompartmentId = &compartmentID
 	ads, err := c.identityClient.ListAvailabilityDomains(context.Background(), req)
@@ -169,7 +169,7 @@ func (c *Client) createReqForOCi(displayName string, availabilityDomain string, 
 			DisplayName: &displayName,
 			Metadata: map[string]string{
 				"ssh_authorized_keys": authorizedKeys,
-				"user_data":           base64.StdEncoding.EncodeToString(createCloudInitScript(sshUser)),
+				"user_data": Userdata,
 			},
 			SourceDetails: core.InstanceSourceViaImageDetails{
 				ImageId: imageID,
@@ -179,7 +179,7 @@ func (c *Client) createReqForOCi(displayName string, availabilityDomain string, 
 	return err, request
 }
 
-func (c *Client) createReqForRover(displayName string, availabilityDomain string, compartmentID string, nodeShape string, nodeImageName string, nodeSubnetID string, sshUser string, authorizedKeys string) (error, core.LaunchInstanceRequest) {
+func (c *Client) createReqForRover(Userdata string, displayName string, availabilityDomain string, compartmentID string, nodeShape string, nodeImageName string, nodeSubnetID string, sshUser string, authorizedKeys string) (error, core.LaunchInstanceRequest) {
 	imageID, err := c.getImageID(compartmentID, nodeImageName)
 	if err != nil {
 		log.Error(err)
@@ -200,7 +200,7 @@ func (c *Client) createReqForRover(displayName string, availabilityDomain string
 			DisplayName: &displayName,
 			Metadata: map[string]string{
 				"ssh_authorized_keys": authorizedKeys,
-				"user_data":           base64.StdEncoding.EncodeToString(createCloudInitScript(sshUser)),
+				"user_data": Userdata,
 			},
 			SourceDetails: core.InstanceSourceViaImageDetails{
 				ImageId:             imageID,

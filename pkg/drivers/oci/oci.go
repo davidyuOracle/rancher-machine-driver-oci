@@ -71,6 +71,7 @@ type Driver struct {
 	//	RoverCertContent     string
 	// Runtime values
 	InstanceID string
+	Userdata string
 }
 
 // NewDriver creates a new driver
@@ -117,7 +118,7 @@ func (d *Driver) Create() error {
 		return err
 	}
 
-	d.InstanceID, err = oci.CreateInstance(d.IsRover, d.MachineName, d.AvailabilityDomain, d.NodeCompartmentID, d.Shape, d.Image, d.SubnetID, d.SSHUser, string(publicKeyBytes), d.OCPUs, d.MemoryInGBs)
+	d.InstanceID, err = oci.CreateInstance(d.IsRover, d.Userdata, d.MachineName, d.AvailabilityDomain, d.NodeCompartmentID, d.Shape, d.Image, d.SubnetID, d.SSHUser, string(publicKeyBytes), d.OCPUs, d.MemoryInGBs)
 	if err != nil {
 		return err
 	}
@@ -253,6 +254,11 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:   "oci-rover-network-endpoint",
 			Usage:  "SSpecify network endpoint for rover",
 			EnvVar: "OCI_ROVER_NETWORK_ENDPOINT",
+		},
+		mcnflag.StringFlag{
+			Name:   "oci-userdata",
+			Usage:  "A user-data file to be passed to cloud-init",
+			EnvVar: "OCI_USERDATA",
 		},
 		//		mcnflag.StringFlag{
 		//			Name:   "oci-rover-cert-path",
@@ -402,6 +408,13 @@ func (d *Driver) PreCreateCheck() error {
 	}
 
 	// TODO, verify VCN and subnet
+	if d.Userdata != "" {
+		file, err := ioutil.ReadFile(d.Userdata)
+		if err != nil {
+			return fmt.Errorf("cannot read userdata file %v: %v", d.Userdata, err)
+		}
+		d.Userdata = string(file)
+	}
 
 	return nil
 }
@@ -514,6 +527,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.IsRover = flags.Bool("oci-is-rover")
 	d.RoverComputeEndpoint = flags.String("oci-rover-compute-endpoint")
 	d.RoverNetworkEndpoint = flags.String("oci-rover-network-endpoint")
+	d.Userdata = flags.String("oci-userdata")
 	//	d.RoverCertPath = flags.String("oci-rover-cert-path")
 	//	d.RoverCertContent = flags.String("oci-rover-cert-content")
 	//	if d.IsRover && d.RoverCertContent == "" && d.RoverCertPath != "" {
