@@ -16,7 +16,7 @@ package oci
 
 import (
 	"context"
-	//"encoding/base64"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
@@ -107,7 +107,7 @@ func (c *Client) CreateInstance(isRover bool, Userdata, displayName, availabilit
 		return "", err
 	}
 
-	log.Debug("request is ", request)
+	log.Debugf("request is %v", request)
 	createResp, err := c.computeClient.LaunchInstance(context.Background(), request)
 	if err != nil {
 		return "", err
@@ -158,6 +158,7 @@ func (c *Client) createReqForOCi(Userdata string, displayName string, availabili
 		return nil, core.LaunchInstanceRequest{}
 	}
 	// Create the launch compute instance request
+	UserdataEncoded := base64.StdEncoding.EncodeToString([]byte(Userdata))
 	request := core.LaunchInstanceRequest{
 		LaunchInstanceDetails: core.LaunchInstanceDetails{
 			AvailabilityDomain: &availabilityDomain,
@@ -169,7 +170,7 @@ func (c *Client) createReqForOCi(Userdata string, displayName string, availabili
 			DisplayName: &displayName,
 			Metadata: map[string]string{
 				"ssh_authorized_keys": authorizedKeys,
-				"user_data": Userdata,
+				"user_data": UserdataEncoded,
 			},
 			SourceDetails: core.InstanceSourceViaImageDetails{
 				ImageId: imageID,
@@ -187,6 +188,7 @@ func (c *Client) createReqForRover(Userdata string, displayName string, availabi
 		return nil, core.LaunchInstanceRequest{}
 	}
 	// Create the launch compute instance request
+	UserdataEncoded := base64.StdEncoding.EncodeToString([]byte(Userdata))
 	request := core.LaunchInstanceRequest{
 		LaunchInstanceDetails: core.LaunchInstanceDetails{
 			AvailabilityDomain: common.String("OREI-1-AD-1"),
@@ -200,7 +202,7 @@ func (c *Client) createReqForRover(Userdata string, displayName string, availabi
 			DisplayName: &displayName,
 			Metadata: map[string]string{
 				"ssh_authorized_keys": authorizedKeys,
-				"user_data": Userdata,
+				"user_data": UserdataEncoded,
 			},
 			SourceDetails: core.InstanceSourceViaImageDetails{
 				ImageId:             imageID,

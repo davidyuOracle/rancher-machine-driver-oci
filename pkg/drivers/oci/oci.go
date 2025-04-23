@@ -26,10 +26,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/docker/machine/libmachine/drivers"
-	"github.com/docker/machine/libmachine/log"
-	"github.com/docker/machine/libmachine/mcnflag"
-	"github.com/docker/machine/libmachine/state"
+	"github.com/rancher/machine/libmachine/drivers"
+	"github.com/rancher/machine/libmachine/log"
+	"github.com/rancher/machine/libmachine/mcnflag"
+	"github.com/rancher/machine/libmachine/state"
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/core"
 	"golang.org/x/crypto/ssh"
@@ -408,13 +408,6 @@ func (d *Driver) PreCreateCheck() error {
 	}
 
 	// TODO, verify VCN and subnet
-	if d.Userdata != "" {
-		file, err := ioutil.ReadFile(d.Userdata)
-		if err != nil {
-			return fmt.Errorf("cannot read userdata file %v: %v", d.Userdata, err)
-		}
-		d.Userdata = string(file)
-	}
 
 	return nil
 }

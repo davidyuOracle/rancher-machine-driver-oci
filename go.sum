@@ -17,8 +17,8 @@ github.com/oracle/oci-go-sdk/v65 v65.53.0 h1:/h+rzaRw7W1eSTeDLhSMTRnyXg1oj5NTPeB
 github.com/oracle/oci-go-sdk/v65 v65.53.0/go.mod h1:IBEV9l1qBzUpo7zgGaRUhbB05BVfcDGYRFBCPlTcPp0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/rancher/machine v0.13.0 h1:UZa0XFS0K9zfNoRr6JWRgeds9XWGK5c4UZnJnVZkjVQ=
-github.com/rancher/machine v0.13.0/go.mod h1:1UV3lGqLhmjRp8Wd3P8cTsKUCs/9GY6He5jGfg6NGB0=
+github.com/rancher/machine v0.16.2 h1:spqeyopqxMo6v/KXVW28z2c2272hLHeEdOL5Qd4Lo90=
+github.com/rancher/machine v0.16.2/go.mod h1:1UV3lGqLhmjRp8Wd3P8cTsKUCs/9GY6He5jGfg6NGB0=
 github.com/sony/gobreaker v0.5.0 h1:dRCvqm0P490vZPmy7ppEk2qCnCieBooFJ+YoXGYB+yg=
 github.com/sony/gobreaker v0.5.0/go.mod h1:ZKptC7FHNvhBz7dN2LGjPVBz2sZJmc0/PkyDJOjmxWY=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=

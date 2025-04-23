@@ -15,7 +15,7 @@ package main
 
 import (
 	"github.com/cpoczatek/rancher-machine-driver-oci/pkg/drivers/oci"
-	"github.com/docker/machine/libmachine/drivers/plugin"
+	"github.com/rancher/machine/libmachine/drivers/plugin"
 )
 
 func main() {
