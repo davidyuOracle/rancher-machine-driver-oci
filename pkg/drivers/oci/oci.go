@@ -117,7 +117,7 @@ func (d *Driver) Create() error {
 	if err != nil {
 		return err
 	}
-
+	log.Debugf("Create() %s", d.Userdata)
 	d.InstanceID, err = oci.CreateInstance(d.IsRover, d.Userdata, d.MachineName, d.AvailabilityDomain, d.NodeCompartmentID, d.Shape, d.Image, d.SubnetID, d.SSHUser, string(publicKeyBytes), d.OCPUs, d.MemoryInGBs)
 	if err != nil {
 		return err

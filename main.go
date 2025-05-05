@@ -14,7 +14,7 @@
 package main
 
 import (
-	"github.com/cpoczatek/rancher-machine-driver-oci/pkg/drivers/oci"
+	"rancher-machine-driver-oci/pkg/drivers/oci"
 	"github.com/rancher/machine/libmachine/drivers/plugin"
 )
 

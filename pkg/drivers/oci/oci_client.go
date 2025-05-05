@@ -96,6 +96,7 @@ func newClient(configuration common.ConfigurationProvider, d *Driver) (*Client, 
 func (c *Client) CreateInstance(isRover bool, Userdata, displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys string, nodeOCPUs, nodeMemoryInGBs int) (string, error) {
 	var request core.LaunchInstanceRequest
 	var err error
+	log.Debugf("createInstance %s", Userdata)
 	if isRover {
 		log.Debug("inside rover")
 		err, request = c.createReqForRover(Userdata, displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys)
@@ -107,7 +108,7 @@ func (c *Client) CreateInstance(isRover bool, Userdata, displayName, availabilit
 		return "", err
 	}
 
-	log.Debugf("request is %v", request)
+	log.Debugf("request is %+v", request)
 	createResp, err := c.computeClient.LaunchInstance(context.Background(), request)
 	if err != nil {
 		return "", err
@@ -154,11 +155,13 @@ func (c *Client) createReqForOCi(Userdata string, displayName string, availabili
 	}
 
 	imageID, err := c.getImageID(compartmentID, nodeImageName)
+	log.Debugf("IMAGE ID %s", imageID)
 	if err != nil {
 		return nil, core.LaunchInstanceRequest{}
 	}
 	// Create the launch compute instance request
 	UserdataEncoded := base64.StdEncoding.EncodeToString([]byte(Userdata))
+	log.Debugf("User Data Encoded %s", UserdataEncoded)
 	request := core.LaunchInstanceRequest{
 		LaunchInstanceDetails: core.LaunchInstanceDetails{
 			AvailabilityDomain: &availabilityDomain,
