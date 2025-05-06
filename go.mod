@@ -1,14 +1,14 @@
 module rancher-machine-driver-oci
 
-go 1.22.0
+go 1.23.0
 
-toolchain go1.22.9
+toolchain go1.23.6
 
 require (
 	// github.com/docker/machine v0.16.2
 	github.com/oracle/oci-go-sdk/v65 v65.53.0
-	github.com/rancher/machine v0.15.0-rancher119
-	golang.org/x/crypto v0.26.0
+	github.com/rancher/machine v0.15.0-rancher127
+	golang.org/x/crypto v0.33.0
 )
 
 require (
@@ -18,8 +18,8 @@ require (
 	github.com/gofrs/flock v0.8.1 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
-	golang.org/x/term v0.23.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/term v0.29.0 // indirect
 )
 
 // require github.com/docker/machine v0.16.2 // indirect
