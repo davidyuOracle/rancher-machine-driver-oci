@@ -387,6 +387,14 @@ func (d *Driver) Kill() error {
 // PreCreateCheck allows for pre-create operations to make sure a driver is ready for creation
 func (d *Driver) PreCreateCheck() error {
 	log.Debug("oci.PreCreateCheck()")
+	if d.Userdata != "" {
+		file, err := os.ReadFile(d.Userdata)
+		if err != nil {
+			return fmt.Errorf("cannot read userdata file %v: %v", d.Userdata, err)
+		}
+		d.Userdata = string(file)
+	}
+
 	if d.IsRover {
 		// TODO better prechecks
 		return nil
@@ -407,6 +415,7 @@ func (d *Driver) PreCreateCheck() error {
 		return fmt.Errorf("could not retrieve availability domain info from OCI")
 	}
 
+	
 	// TODO, verify VCN and subnet
 
 	return nil
